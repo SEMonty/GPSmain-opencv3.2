@@ -13,7 +13,7 @@ float HEIGHT = 300;
 
 float REAL_WIDTH = 700;  //実際のフィールドサイズ(cm)
 float REAL_HEIGHT = 700;
-//#define HOMO			//透視変換をやる時
+#define HOMO			//透視変換をやる時
 int main()
 {
 
@@ -22,15 +22,15 @@ int main()
 	//////
 	//////
 	//////////////////////カメラ接続と最初のフレームの読み出し//////////////////
-	VideoCapture cap("sample.wmv");
+	VideoCapture cap(video_num);
 	Mat fistframe;
 	cap >> fistframe;
-	cap >> fistframe;
-	cap >> fistframe;
-	cap >> fistframe;
+	//////////////初回の処理///////////////////////////////
 	//////////////透視変換の準備///////////////////////////////
 #ifdef HOMO
 	Mat homography_matrix = my_getPerspectiveTransform(fistframe);
+	warpPerspective(fistframe, fistframe, homography_matrix, Size(WIDTH, HEIGHT));
+	cv::imshow("homography", fistframe);
 #endif
 	//////////////トラッキングの準備///////////////////////////////
 	// Trackerの生成
