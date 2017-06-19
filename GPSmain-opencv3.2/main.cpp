@@ -24,13 +24,24 @@ int main()
 	//////////////////////カメラ接続と最初のフレームの読み出し//////////////////
 	VideoCapture cap(video_num);
 	Mat fistframe;
-	cap >> fistframe;
+	Mat homography_matrix;
 	//////////////初回の処理///////////////////////////////
 	//////////////透視変換の準備///////////////////////////////
 #ifdef HOMO
-	Mat homography_matrix = my_getPerspectiveTransform(fistframe);
-	warpPerspective(fistframe, fistframe, homography_matrix, Size(WIDTH, HEIGHT));
-	cv::imshow("homography", fistframe);
+	while (cap.grab()) {
+		cap.retrieve(fistframe);
+
+		homography_matrix = my_getPerspectiveTransform(fistframe);
+		warpPerspective(fistframe, fistframe, homography_matrix, Size(WIDTH, HEIGHT));
+		cv::imshow("homography", fistframe);
+
+		///////////////その他///////////////
+		int key = waitKey(1);
+		if (key == 110)//nボタンが押されたら次へ
+		{
+			break;
+		}
+	}
 #endif
 	//////////////トラッキングの準備///////////////////////////////
 	// Trackerの生成
@@ -84,6 +95,7 @@ int main()
 		double car_a_degree = radian * 180 / 3.14159265358979323846;
 		//表示
 		cout << "x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree << endl;
+		cout << "x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree << endl;
 		///////////////勝敗、アイテム判定///////////////
 		//////
 		//////
@@ -94,13 +106,6 @@ int main()
 		//////
 		///////////////その他///////////////
 		int key = waitKey(1);
-		if (key == 112)//pボタンが押されたとき透視変換行列の再計算
-		{
-#ifdef HOMO
-			homography_matrix = my_getPerspectiveTransform(frame);
-#endif
-			break;
-		}
 		if (key == 113)//qボタンが押されたとき終了
 		{
 			break;
