@@ -91,7 +91,7 @@ int main()
 
 		double car_a_x = (car_a_ce_pos.x / WIDTH) * REAL_WIDTH;
 		double car_a_y = (car_a_ce_pos.y / HEIGHT) * REAL_HEIGHT;
-		double radian = atan2(car_a_fr_pos.y - car_a_rr_pos.y, car_a_fr_pos.x - car_a_rr_pos.x);
+		double radian = atan2(car_a_rr_pos.y - car_a_fr_pos.y, car_a_fr_pos.x - car_a_rr_pos.x);//îΩéûåvâÒÇËÇê≥ÅA-piÅ`pi
 		double car_a_degree = radian * 180 / 3.14159265358979323846;
 		//ï\é¶
 		cout << "x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree << endl;
