@@ -6,7 +6,7 @@
 using namespace std;
 using namespace cv;
 //適合っぽい変数
-int video_num = 0; //ビデオ入力番号
+int video_num = 1; //ビデオ入力番号
 
 float WIDTH = 451;	//透視変換後の画像サイズ
 float HEIGHT = 416;
@@ -14,6 +14,7 @@ float HEIGHT = 416;
 float REAL_WIDTH = 451;  //実際のフィールドサイズ(cm)
 float REAL_HEIGHT = 416;
 //#define HOMO			//透視変換をやる時
+//#define VIDEO	//動画とるとき
 int main()
 {
 
@@ -44,10 +45,12 @@ int main()
 		}
 	}
 #endif
-	////ビデオファイルのオープンとビデオキャプチャクラスのインスタンス生成
-	//VideoCapture cap("video.avi");
-	//"test1.avi"というファイル名で作成する
-	VideoWriter writer("test1.avi", CV_FOURCC_DEFAULT, 10, Size(640, 480), true);
+
+#ifdef VIDEO
+	//////////////動画取得の準備///////////////////////////////
+	////ビデオキャプチャクラスのインスタンス生成
+		VideoWriter writer("test1.avi", CV_FOURCC_DEFAULT, 10, Size(640, 480), true);//"test1.avi"というファイル名で作成する#
+#endif
 
 	//////////////トラッキングの準備///////////////////////////////
 	// Trackerの生成
@@ -59,6 +62,7 @@ int main()
 
 										   // Trackerの初期化
 	trackerKCF.add(fistframe, rois);
+
 
 	//メインループ
 	while (cap.grab()) {
@@ -111,16 +115,17 @@ int main()
 		//////
 		//////
 		///////////////その他///////////////
-
-		//フレームの保存
-		writer << frame;
-
+#ifdef VIDEO		//動画の保存
+		writer << frame;//フレームを動画に保存
+#endif	
 
 		int key = waitKey(1);
 		if (key == 113)//qボタンが押されたとき終了
 		{
 			break;
 		}
+
+		cv::VideoCapture release(0);//カメラのリリース
 	}
 }
 
