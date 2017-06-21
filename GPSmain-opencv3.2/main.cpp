@@ -8,12 +8,12 @@ using namespace cv;
 //適合っぽい変数
 int video_num = 0; //ビデオ入力番号
 
-float WIDTH = 300;	//透視変換後の画像サイズ
-float HEIGHT = 300;
+float WIDTH = 451;	//透視変換後の画像サイズ
+float HEIGHT = 416;
 
-float REAL_WIDTH = 700;  //実際のフィールドサイズ(cm)
-float REAL_HEIGHT = 700;
-#define HOMO			//透視変換をやる時
+float REAL_WIDTH = 451;  //実際のフィールドサイズ(cm)
+float REAL_HEIGHT = 416;
+//#define HOMO			//透視変換をやる時
 int main()
 {
 
@@ -27,6 +27,7 @@ int main()
 	Mat homography_matrix;
 	//////////////初回の処理///////////////////////////////
 	//////////////透視変換の準備///////////////////////////////
+	cap >> fistframe;
 #ifdef HOMO
 	while (cap.grab()) {
 		cap.retrieve(fistframe);
@@ -43,6 +44,11 @@ int main()
 		}
 	}
 #endif
+	////ビデオファイルのオープンとビデオキャプチャクラスのインスタンス生成
+	//VideoCapture cap("video.avi");
+	//"test1.avi"というファイル名で作成する
+	VideoWriter writer("test1.avi", CV_FOURCC_DEFAULT, 10, Size(640, 480), true);
+
 	//////////////トラッキングの準備///////////////////////////////
 	// Trackerの生成
 	MultiTracker trackerKCF("KCF");
@@ -105,6 +111,11 @@ int main()
 		//////
 		//////
 		///////////////その他///////////////
+
+		//フレームの保存
+		writer << frame;
+
+
 		int key = waitKey(1);
 		if (key == 113)//qボタンが押されたとき終了
 		{
