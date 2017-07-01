@@ -7,7 +7,9 @@ using namespace std;
 using namespace cv;
 //適合っぽい変数
 int camera_num = 0; //ビデオ入力番号
-string video_name = "video\4_720_30fps_横.avi"; //ビデオの名前
+string video_name = "video\\4_720_30fps_横.wmv"; //ビデオの名前
+//string video_name = "video\\test1.wmv"; //ビデオの名前
+
 bool online = false; //カメラ：true　ビデオ:false
 
 int CWIDTH = 1280; //カメラ、ビデオの入力画像サイズ
@@ -24,13 +26,11 @@ string filename = "output.wmv";
 
 //#define ARHOMO			//ARUCOで透視変換
 #define MANHOMO			//手動で透視変換
-#define SAVEVIDEO			//動画
+//#define SAVEVIDEO			//動画
 #define TRACK			//トラッキングする
 
 int main()
 {
-	
-
 	///////////////ゲーム開始待ち、開始命令の送信///////////////
 	//////
 	//////
@@ -50,8 +50,8 @@ int main()
 		return -1;
 	}
 
-	cap.set(CAP_PROP_FRAME_WIDTH, CWIDTH);	//サイズ指定
-	cap.set(CAP_PROP_FRAME_HEIGHT, CHEIGHT);	//サイズ指定
+	//cap.set(CAP_PROP_FRAME_WIDTH, CWIDTH);	//サイズ指定
+	//cap.set(CAP_PROP_FRAME_HEIGHT, CHEIGHT);	//サイズ指定
 	//cap.set(CAP_PROP_FPS, 30);				//FPS設定
 	//コンソールにカメラ設定の出力
 	cout << "Web Camera settings:" << endl;
@@ -189,39 +189,60 @@ int main()
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //手動で4点を選ぶ、透視変換行列の算出
-Mat ar_getPerspectiveTransform(Mat frame) {
+//左クリックで、左上→右上→右下→左下の順に指定
+Mat man_getPerspectiveTransform(Mat frame) {
 
 	mouseParam mouseEvent;
 	// 変換前の画像での座標
-	Point2f lefttop = Point2f(431, 26);
-	Point2f righttop = Point2f(740, 130);
-	Point2f leftbottom = Point2f(63, 394);
-	Point2f rightbottom = Point2f(837, 537);
+	Point2f lefttop;
+	Point2f righttop;
+	Point2f leftbottom;
+	Point2f rightbottom;
 
 	imshow("manhomo", frame);
 	setMouseCallback("manhomo", CallBackFunc, &mouseEvent);
+	int c = 0;
 	while (1) {
 		imshow("manhomo", frame);
-		cv::waitKey(20);
-		//左クリックがあったら表示
+		cv::waitKey(1);
 		if (mouseEvent.event == cv::EVENT_LBUTTONDOWN) {
-			//クリック後のマウスの座標を出力
 			std::cout << mouseEvent.x << " , " << mouseEvent.y << std::endl;
+			Point2f poi = Point2f(mouseEvent.x, mouseEvent.y);
+			switch (c%4)
+			{
+			case 0:
+				lefttop = poi;
+				circle(frame, poi, 5, cv::Scalar(200, 0, 0), -1);
+				break;
+			case 1:
+				righttop = poi;
+				circle(frame, poi, 5, cv::Scalar(0, 200, 0), -1);
+				break;
+			case 2:
+				rightbottom = poi;
+				circle(frame, poi, 5, cv::Scalar(0, 0, 200), -1);
+				break;
+			case 3:
+				leftbottom = poi;
+				circle(frame, poi, 5, cv::Scalar(200, 0, 200), -1);
+				break;
+			default:
+				break;
+			}
+			imshow("manhomo", frame);
+			cv::waitKey(100);
+			c++;
 		}
-		//右クリックがあったら終了
-		else if (mouseEvent.event == cv::EVENT_RBUTTONDOWN) {
+		//4回目で抜ける
+		if (c >= 4)
 			break;
-		}
 	}
-	return 0;
+	destroyWindow("manhomo");
 
 	const Point2f src_pt[] = { lefttop, leftbottom,righttop,rightbottom };
 	// 変換後の画像での座標
 	const Point2f dst_pt[] = { Point2f(0,0),Point2f(0,HEIGHT),Point2f(WIDTH, 0),Point2f(WIDTH,HEIGHT) };
 
-	homography_matrix = getPerspectiveTransform(src_pt, dst_pt);
-
-	warpPerspective(fistframe, fistframe, homography_matrix, Size(WIDTH, HEIGHT));
 	return  getPerspectiveTransform(src_pt, dst_pt);
 }
 //コールバック関数
@@ -234,6 +255,7 @@ void CallBackFunc(int eventType, int x, int y, int flags, void* userdata)
 	ptr->event = eventType;
 	ptr->flags = flags;
 }
+
 //arucoタグを使った透視変換行列の算出
 Mat ar_getPerspectiveTransform(Mat frame) {
 
@@ -287,6 +309,7 @@ Mat ar_getPerspectiveTransform(Mat frame) {
 
 	return  getPerspectiveTransform(src_pt, dst_pt);
 }
+
 //ネットから拾ってきた色抽出　http://qiita.com/crakaC/items/65fab9d0b0ac29e68ab6
 void colorExtraction(Mat* src, Mat* dst,
 	int code,
