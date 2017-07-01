@@ -15,11 +15,11 @@ bool online = false; //カメラ：true　ビデオ:false
 int CWIDTH = 1280; //カメラ、ビデオの入力画像サイズ
 int CHEIGHT = 720;
 
-float WIDTH = 451;	//透視変換後の画像サイズ
-float HEIGHT = 416;
+float WIDTH = 520;	//透視変換後の画像サイズ
+float HEIGHT = 275;
 
-float REAL_WIDTH = 3.60;  //実際のフィールドサイズ(m)
-float REAL_HEIGHT = 3.60;
+float REAL_WIDTH = 5.2;  //実際のフィールドサイズ(m)
+float REAL_HEIGHT = 2.75;
 //ビデオ書き出し設定
 const int fourcc = VideoWriter::fourcc('W', 'M', 'V', '3');
 string filename = "output.wmv";
