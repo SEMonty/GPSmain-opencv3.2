@@ -43,8 +43,8 @@ int main()
 		cap.open(video_name);
 
 	if (!cap.isOpened()) {
-		cout << "Camera or video can not be opened" <<endl;
-		cout << "Press enter to Exit" << endl;
+		std::cout << "Camera or video can not be opened" <<endl;
+		std::cout << "Press enter to Exit" << endl;
 		getchar(); //
 		return -1;
 	}
@@ -53,14 +53,14 @@ int main()
 	//cap.set(CAP_PROP_FRAME_HEIGHT, CHEIGHT);	//サイズ指定
 	//cap.set(CAP_PROP_FPS, 30);				//FPS設定
 	//コンソールにカメラ設定の出力
-	cout << "Web Camera settings:" << endl;
-	cout << "Width:" + to_string(cap.get(CAP_PROP_FRAME_WIDTH)) << endl;
-	cout << "Height:" + to_string(cap.get(CAP_PROP_FRAME_HEIGHT)) << endl;
-	cout << "FPS:" + to_string(cap.get(CAP_PROP_FPS)) << endl;
-	cout << "Exposure:" + to_string(cap.get(CAP_PROP_EXPOSURE)) << endl;
-	cout << "Gain:" + to_string(cap.get(CAP_PROP_GAIN)) << endl;
-	cout << "Iso_speed:" + to_string(cap.get(CAP_PROP_ISO_SPEED)) << endl;
-	cout << "speed:" + to_string(cap.get(CAP_PROP_SPEED)) << endl;
+	std::cout << "Web Camera settings:" << endl;
+	std::cout << "Width:" + to_string(cap.get(CAP_PROP_FRAME_WIDTH)) << endl;
+	std::cout << "Height:" + to_string(cap.get(CAP_PROP_FRAME_HEIGHT)) << endl;
+	std::cout << "FPS:" + to_string(cap.get(CAP_PROP_FPS)) << endl;
+	std::cout << "Exposure:" + to_string(cap.get(CAP_PROP_EXPOSURE)) << endl;
+	std::cout << "Gain:" + to_string(cap.get(CAP_PROP_GAIN)) << endl;
+	std::cout << "Iso_speed:" + to_string(cap.get(CAP_PROP_ISO_SPEED)) << endl;
+	std::cout << "speed:" + to_string(cap.get(CAP_PROP_SPEED)) << endl;
 			
 	//初期フレームの読み出し
 	Mat fistframe;
@@ -123,7 +123,7 @@ int main()
 		Mat frame;
 		///////////////カメラ画像取得///////////////
 		cap.retrieve(frame);
-		imshow("frame", frame);
+		//imshow("frame", frame);
 #ifdef SAVEVIDEO		//動画の保存
 		writer << frame;//フレームを動画に保存
 #endif	
@@ -134,7 +134,6 @@ int main()
 		///////////////透視変換///////////////
 #ifdef MANHOMO || ARHOMO
 		warpPerspective(frame, frame, homography_matrix, Size(WIDTH, HEIGHT));
-		imshow("homography", frame);
 #endif
 		//表示
 		///////////////色抽出(予定)///////////////
@@ -143,14 +142,17 @@ int main()
 		//////
 		///////////////トラッキング///////////////
 #ifdef TRACK
+		std::chrono::system_clock::time_point  start, end;
+		start = std::chrono::system_clock::now(); // 計測開始時間
 		trackerKCF.update(frame, rois);
+		end = std::chrono::system_clock::now();  // 計測終了時間
+		double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(); //処理に要した時間をミリ秒に変換
+		std::cout << "elapsed:" << elapsed << endl;
 		//表示
-		Mat cpframe;
-		frame.copyTo(cpframe);
 		for (unsigned int i = 0; i < rois.size(); i++) {
-			rectangle(cpframe, rois[i], Scalar(0, (80 * (i % 4)), 0), 2, 1);
+			rectangle(frame, rois[i], Scalar(0, (80 * (i % 4)), 0), 2, 1);
 		}
-		imshow("tracker", cpframe);
+		imshow("tracker", frame);
 
 		///////////////座標から実世界の距離へ変換///////////////
 		Point2f car_a_fr_pos = Point2f(rois[0].x + rois[0].width / 2, rois[0].y + rois[0].height / 2);
@@ -163,8 +165,7 @@ int main()
 		double radian = atan2(car_a_rr_pos.y - car_a_fr_pos.y, car_a_fr_pos.x - car_a_rr_pos.x);//反時計回りを正、-pi～pi
 		double car_a_degree = radian * 180 / 3.14159265358979323846;
 		//表示
-		cout << "x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree << endl;
-		cout << "x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree << endl;
+		std::cout << "\t\t x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree << endl;
 
 #endif // TRACK
 		///////////////勝敗、アイテム判定///////////////
@@ -176,14 +177,14 @@ int main()
 		//////
 		//////
 		///////////////その他///////////////
-
+		/*
 		int key = waitKey(1);
 		if (key == 113)//qボタンが押されたとき終了
 		{
 		
 			break;
 		}
-
+		*/
 	}
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
