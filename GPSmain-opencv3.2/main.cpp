@@ -7,7 +7,7 @@ using namespace std;
 using namespace cv;
 //適合っぽい変数
 int camera_num = 0; //ビデオ入力番号
-string video_name = "test1.wmv"; //ビデオの名前
+string video_name = "video\4_720_30fps_横.avi"; //ビデオの名前
 bool online = false; //カメラ：true　ビデオ:false
 
 int CWIDTH = 1280; //カメラ、ビデオの入力画像サイズ
@@ -18,7 +18,7 @@ float HEIGHT = 416;
 
 float REAL_WIDTH = 3.60;  //実際のフィールドサイズ(m)
 float REAL_HEIGHT = 3.60;
-
+//ビデオ書き出し設定
 const int fourcc = VideoWriter::fourcc('W', 'M', 'V', '3');
 string filename = "output.wmv";
 
@@ -52,7 +52,7 @@ int main()
 
 	cap.set(CAP_PROP_FRAME_WIDTH, CWIDTH);	//サイズ指定
 	cap.set(CAP_PROP_FRAME_HEIGHT, CHEIGHT);	//サイズ指定
-	cap.set(CAP_PROP_FPS, 30);
+	//cap.set(CAP_PROP_FPS, 30);				//FPS設定
 	//コンソールにカメラ設定の出力
 	cout << "Web Camera settings:" << endl;
 	cout << "Width:" + to_string(cap.get(CAP_PROP_FRAME_WIDTH)) << endl;
@@ -83,23 +83,14 @@ int main()
 	Mat homography_matrix;
 #ifdef ARHOMO
 	
-	homography_matrix = my_getPerspectiveTransform(fistframe);
+	homography_matrix = ar_getPerspectiveTransform(fistframe);
 
 	warpPerspective(fistframe, fistframe, homography_matrix, Size(WIDTH, HEIGHT));
 #endif
-#ifdef MANHOMO	//手動ホモグラフィ
-	// 変換前の画像での座標
-	Point2f lefttop = Point2f(431, 26);
-	Point2f righttop = Point2f(740, 130);
-	Point2f leftbottom = Point2f(63, 394);
-	Point2f rightbottom = Point2f(837, 537);
-	const Point2f src_pt[] = { lefttop, leftbottom,righttop,rightbottom };
-	// 変換後の画像での座標
-	const Point2f dst_pt[] = { Point2f(0,0),Point2f(0,HEIGHT),Point2f(WIDTH, 0),Point2f(WIDTH,HEIGHT) };
-
-	homography_matrix = getPerspectiveTransform(src_pt, dst_pt);
+	homography_matrix = man_getPerspectiveTransform(fistframe);
 
 	warpPerspective(fistframe, fistframe, homography_matrix, Size(WIDTH, HEIGHT));
+#ifdef MANHOMO	//手動ホモグラフィ
 #endif // MANHOMO
 
 
@@ -196,9 +187,55 @@ int main()
 
 	}
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//手動で4点を選ぶ、透視変換行列の算出
+Mat ar_getPerspectiveTransform(Mat frame) {
 
+	mouseParam mouseEvent;
+	// 変換前の画像での座標
+	Point2f lefttop = Point2f(431, 26);
+	Point2f righttop = Point2f(740, 130);
+	Point2f leftbottom = Point2f(63, 394);
+	Point2f rightbottom = Point2f(837, 537);
+
+	imshow("manhomo", frame);
+	setMouseCallback("manhomo", CallBackFunc, &mouseEvent);
+	while (1) {
+		imshow("manhomo", frame);
+		cv::waitKey(20);
+		//左クリックがあったら表示
+		if (mouseEvent.event == cv::EVENT_LBUTTONDOWN) {
+			//クリック後のマウスの座標を出力
+			std::cout << mouseEvent.x << " , " << mouseEvent.y << std::endl;
+		}
+		//右クリックがあったら終了
+		else if (mouseEvent.event == cv::EVENT_RBUTTONDOWN) {
+			break;
+		}
+	}
+	return 0;
+
+	const Point2f src_pt[] = { lefttop, leftbottom,righttop,rightbottom };
+	// 変換後の画像での座標
+	const Point2f dst_pt[] = { Point2f(0,0),Point2f(0,HEIGHT),Point2f(WIDTH, 0),Point2f(WIDTH,HEIGHT) };
+
+	homography_matrix = getPerspectiveTransform(src_pt, dst_pt);
+
+	warpPerspective(fistframe, fistframe, homography_matrix, Size(WIDTH, HEIGHT));
+	return  getPerspectiveTransform(src_pt, dst_pt);
+}
+//コールバック関数
+void CallBackFunc(int eventType, int x, int y, int flags, void* userdata)
+{
+	mouseParam *ptr = static_cast<mouseParam*> (userdata);
+
+	ptr->x = x;
+	ptr->y = y;
+	ptr->event = eventType;
+	ptr->flags = flags;
+}
 //arucoタグを使った透視変換行列の算出
-Mat my_getPerspectiveTransform(Mat frame) {
+Mat ar_getPerspectiveTransform(Mat frame) {
 
 	//透視変換前の4隅座標
 	Point2f lefttop;

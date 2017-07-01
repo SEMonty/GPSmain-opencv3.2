@@ -19,8 +19,15 @@
 
 
 // TODO: プログラムに必要な追加ヘッダーをここで参照してください
-cv::Mat my_getPerspectiveTransform(cv::Mat frame);
-
+cv::Mat ar_getPerspectiveTransform(cv::Mat frame);
+cv::Mat man_getPerspectiveTransform(cv::Mat frame);
+//マウス入力用のパラメータ
+struct mouseParam {
+	int x;
+	int y;
+	int event;
+	int flags;
+};
 #ifdef _DEBUG
 //Debugモードの場合
 #pragma comment(lib,"opencv_aruco320d.lib")
