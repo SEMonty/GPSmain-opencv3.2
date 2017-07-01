@@ -28,7 +28,6 @@ string filename = "output.wmv";
 #define MANHOMO			//手動で透視変換
 //#define SAVEVIDEO			//動画
 #define TRACK			//トラッキングする
-
 int main()
 {
 	///////////////ゲーム開始待ち、開始命令の送信///////////////
