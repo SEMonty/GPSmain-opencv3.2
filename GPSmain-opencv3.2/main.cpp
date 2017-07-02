@@ -125,8 +125,10 @@ int main()
 			break;
 		}
 
-		cv::VideoCapture release(0);//カメラのリリース
+		
 	}
+	cv::VideoCapture release(video_num);//カメラのリリース
+	return 0;
 }
 
 //arucoタグを使った透視変換行列の算出
