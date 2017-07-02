@@ -18,37 +18,8 @@
 #include <math.h>
 #include <chrono>
 
-using namespace std;
-using namespace cv;
+
 // TODO: プログラムに必要な追加ヘッダーをここで参照してください
-
-//マウス入力用のパラメータ
-struct mouseParam {
-	int x;
-	int y;
-	int event;
-	int flags;
-};
-
-///認識するオブジェクト情報
-struct TrackingObj {
-	const int H_MIN;
-	const int H_MAX;
-	const int S_MIN;
-	const int S_MAX;
-	const int V_MIN;
-	const int V_MAX;
-	int x;
-	int y;
-};
-// 関数ヘッダー
-cv::Mat ar_getPerspectiveTransform(cv::Mat frame);
-cv::Mat man_getPerspectiveTransform(cv::Mat frame);
-void CallBackFunc(int eventType, int x, int y, int flags, void* userdata);
-Mat getBinFrame(Mat rgbframe, struct TrackingObj &obj);
-void morphOps(Mat &thresh);
-void trackFilteredObject(struct TrackingObj &obj, Mat threshold, int max_num_obj, int min_obj_area, int max_obj_area);
-
 
 #ifdef _DEBUG
 //Debugモードの場合
