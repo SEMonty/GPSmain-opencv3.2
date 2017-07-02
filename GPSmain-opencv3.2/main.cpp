@@ -8,7 +8,7 @@ using namespace cv;
 //適合っぽい変数
 int camera_num = 0; //ビデオ入力番号
 string video_name = "video\\4_720_30fps_横.wmv"; //ビデオの名前
-//string video_name = "video\\test1.wmv"; //ビデオの名前
+												//string video_name = "video\\test1.wmv"; //ビデオの名前
 
 bool online = false; //カメラ：true　ビデオ:false
 
@@ -43,7 +43,7 @@ int main()
 		cap.open(video_name);
 
 	if (!cap.isOpened()) {
-		cout << "Camera or video can not be opened" <<endl;
+		cout << "Camera or video can not be opened" << endl;
 		cout << "Press enter to Exit" << endl;
 		getchar(); //
 		return -1;
@@ -61,7 +61,7 @@ int main()
 	cout << "Gain:" + to_string(cap.get(CAP_PROP_GAIN)) << endl;
 	cout << "Iso_speed:" + to_string(cap.get(CAP_PROP_ISO_SPEED)) << endl;
 	cout << "speed:" + to_string(cap.get(CAP_PROP_SPEED)) << endl;
-			
+
 	//初期フレームの読み出し
 	Mat fistframe;
 	cap >> fistframe;
@@ -81,7 +81,7 @@ int main()
 	//////////////透視変換行列の算出///////////////////////////////
 	Mat homography_matrix;
 #ifdef ARHOMO
-	
+
 	homography_matrix = ar_getPerspectiveTransform(fistframe);
 
 	warpPerspective(fistframe, fistframe, homography_matrix, Size(WIDTH, HEIGHT));
@@ -114,6 +114,11 @@ int main()
 
 	Point2f car_a_ce_pos = Point2f((car_a_fr_pos.x + car_a_rr_pos.x) / 2, (car_a_fr_pos.y + car_a_rr_pos.y) / 2);
 
+	Point2f car_b_fr_pos = Point2f(rois[2].x + rois[2].width / 2, rois[2].y + rois[2].height / 2);
+	Point2f car_b_rr_pos = Point2f(rois[3].x + rois[3].width / 2, rois[3].y + rois[3].height / 2);
+
+	Point2f car_b_ce_pos = Point2f((car_b_fr_pos.x + car_b_rr_pos.x) / 2, (car_b_fr_pos.y + car_b_rr_pos.y) / 2);
+
 	// Trackerの初期化
 	trackerKCF.add(fistframe, rois);
 #endif // TRACK
@@ -127,11 +132,11 @@ int main()
 #ifdef SAVEVIDEO		//動画の保存
 		writer << frame;//フレームを動画に保存
 #endif	
-		///////////////歪み補正(予定)///////////////
-		//////
-		//////
-		//////
-		///////////////透視変換///////////////
+						///////////////歪み補正(予定)///////////////
+						//////
+						//////
+						//////
+						///////////////透視変換///////////////
 #ifdef MANHOMO || ARHOMO
 		warpPerspective(frame, frame, homography_matrix, Size(WIDTH, HEIGHT));
 		imshow("homography", frame);
@@ -155,16 +160,25 @@ int main()
 		///////////////座標から実世界の距離へ変換///////////////
 		Point2f car_a_fr_pos = Point2f(rois[0].x + rois[0].width / 2, rois[0].y + rois[0].height / 2);
 		Point2f car_a_rr_pos = Point2f(rois[1].x + rois[1].width / 2, rois[1].y + rois[1].height / 2);
+		Point2f car_b_fr_pos = Point2f(rois[2].x + rois[2].width / 2, rois[2].y + rois[2].height / 2);
+		Point2f car_b_rr_pos = Point2f(rois[3].x + rois[3].width / 2, rois[3].y + rois[3].height / 2);
 
 		Point2f car_a_ce_pos = Point2f((car_a_fr_pos.x + car_a_rr_pos.x) / 2, (car_a_fr_pos.y + car_a_rr_pos.y) / 2);
+		Point2f car_b_ce_pos = Point2f((car_b_fr_pos.x + car_b_rr_pos.x) / 2, (car_b_fr_pos.y + car_b_rr_pos.y) / 2);
 
 		double car_a_x = (car_a_ce_pos.x / WIDTH) * REAL_WIDTH;
 		double car_a_y = (car_a_ce_pos.y / HEIGHT) * REAL_HEIGHT;
 		double radian = atan2(car_a_rr_pos.y - car_a_fr_pos.y, car_a_fr_pos.x - car_a_rr_pos.x);//反時計回りを正、-pi～pi
 		double car_a_degree = radian * 180 / 3.14159265358979323846;
+
+		double car_b_x = (car_b_ce_pos.x / WIDTH) * REAL_WIDTH;
+		double car_b_y = (car_b_ce_pos.y / HEIGHT) * REAL_HEIGHT;
+		double radian = atan2(car_b_rr_pos.y - car_b_fr_pos.y, car_b_fr_pos.x - car_b_rr_pos.x);//反時計回りを正、-pi～pi
+		double car_b_degree = radian * 180 / 3.14159265358979323846;
+
 		//表示
-		cout << "x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree << endl;
-		cout << "x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree << endl;
+		cout << "x_A:" << car_a_x << " y_A:" << car_a_y << " deg_A:" << car_a_degree << endl;
+		cout << "x_B:" << car_b_x << " y_B:" << car_b_y << " deg_B:" << car_b_degree << endl;
 
 #endif // TRACK
 		///////////////勝敗、アイテム判定///////////////
@@ -180,7 +194,7 @@ int main()
 		int key = waitKey(1);
 		if (key == 113)//qボタンが押されたとき終了
 		{
-		
+
 			break;
 		}
 
@@ -207,7 +221,7 @@ Mat man_getPerspectiveTransform(Mat frame) {
 		if (mouseEvent.event == cv::EVENT_LBUTTONDOWN) {
 			std::cout << mouseEvent.x << " , " << mouseEvent.y << std::endl;
 			Point2f poi = Point2f(mouseEvent.x, mouseEvent.y);
-			switch (c%4)
+			switch (c % 4)
 			{
 			case 0:
 				lefttop = poi;
@@ -371,5 +385,3 @@ void colorExtraction(Mat* src, Mat* dst,
 	src->copyTo(maskedImage, maskImage);
 	*dst = maskedImage;
 }
-
-
