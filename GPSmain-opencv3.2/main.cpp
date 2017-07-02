@@ -123,6 +123,9 @@ int main()
 	//メインループ
 	while (cap.grab()) {
 		Mat frame;
+
+		std::chrono::system_clock::time_point  start, end;
+		start = std::chrono::system_clock::now(); // 計測開始時間
 		///////////////カメラ画像取得///////////////
 		cap.retrieve(frame);
 		imshow("frame", frame);
@@ -144,12 +147,8 @@ int main()
 #endif
 		///////////////トラッキング1///////////////
 #ifdef TRACK
-		std::chrono::system_clock::time_point  start, end;
-		start = std::chrono::system_clock::now(); // 計測開始時間
 		trackerKCF.update(frame, rois);
-		end = std::chrono::system_clock::now();  // 計測終了時間
-		double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(); //処理に要した時間をミリ秒に変換
-		std::cout << "elapsed:" << elapsed << endl;
+
 		//表示
 		for (unsigned int i = 0; i < rois.size(); i++) {
 			rectangle(frame, rois[i], Scalar(0, (80 * (i % 4)), 0), 2, 1);
@@ -165,8 +164,6 @@ int main()
 		double car_a_y = (car_a_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;
 		double radian = atan2(car_a_rr_pos.y - car_a_fr_pos.y, car_a_fr_pos.x - car_a_rr_pos.x);//反時計回りを正、-pi～pi
 		double car_a_degree = radian * 180 / 3.14159265358979323846;
-		//表示
-		std::cout << "\t\t x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree << endl;
 
 #endif // TRACK
 		///////////////トラッキング2///////////////
@@ -183,6 +180,8 @@ int main()
 		circle(frame, Point2d(ego_fr_obj.x, ego_fr_obj.y), 10, cv::Scalar(200, 0, 0), 5);
 		circle(frame, Point2d(ego_rr_obj.x, ego_rr_obj.y), 10, cv::Scalar(0, 200, 0), 5);
 
+		imshow("fr_binframe", ego_fr_bin);
+		imshow("rr_binframe", ego_rr_bin);
 		imshow("tracker", frame);
 		///////////////座標から実世界の距離へ変換///////////////
 		Point2f car_a_ce_pos = Point2f((ego_fr_obj.x + ego_rr_obj.x) / 2, (ego_fr_obj.y + ego_rr_obj.y) / 2);
@@ -191,8 +190,6 @@ int main()
 		double car_a_y = (car_a_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;
 		double radian = atan2(ego_rr_obj.y - ego_fr_obj.y, ego_fr_obj.x - ego_rr_obj.x);//反時計回りを正、-pi～pi
 		double car_a_degree = radian * 180 / 3.14159265358979323846;
-		//表示
-		std::cout << "\t\t x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree << endl;
 #endif // TRACK2
 
 		///////////////勝敗、アイテム判定///////////////
@@ -209,13 +206,20 @@ int main()
 			cap.set(CV_CAP_PROP_POS_FRAMES, 1);
 		}
 
-		int key = waitKey(10);
+		int key = waitKey(1);
 		if (key == 113)//qボタンが押されたとき終了
 		{
 
 			break;
 		}
 
+		end = std::chrono::system_clock::now();  // 計測終了時間
+		double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(); //処理に要した時間をミリ秒に変換
+
+
+		//表示
+		std::cout << "x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree ;
+		std::cout << " \t elapsed_time:" << elapsed << endl;
 	}
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////

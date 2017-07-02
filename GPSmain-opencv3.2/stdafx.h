@@ -47,7 +47,7 @@ cv::Mat man_getPerspectiveTransform(cv::Mat frame);
 void CallBackFunc(int eventType, int x, int y, int flags, void* userdata);
 Mat getBinFrame(Mat rgbframe, struct TrackingObj &obj);
 void morphOps(Mat &thresh);
-void trackFilteredObject(struct TrackingObj &obj, Mat threshold, int max_num_obj, int min_obj_area, int max_obj_area);
+bool trackFilteredObject(struct TrackingObj &obj, Mat threshold, int max_num_obj, int min_obj_area, int max_obj_area);
 
 
 #ifdef _DEBUG
