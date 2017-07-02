@@ -201,11 +201,6 @@ int main()
 		//////
 		//////
 		///////////////その他///////////////
-		//最後まで行ったら最初から再生
-		if (!online && !cap.grab()) {
-			cap.set(CV_CAP_PROP_POS_FRAMES, 1);
-		}
-
 		int key = waitKey(1);
 		if (key == 113)//qボタンが押されたとき終了
 		{
