@@ -173,13 +173,26 @@ int main()
 #ifdef TRACK2
 		//自車フロント
 		Mat ego_fr_bin = getBinFrame(frame, ego_fr_obj);//2値画像
+		trackFilteredObject(ego_fr_obj, ego_fr_bin, 10, 300, HM_WIDTH * HM_HEIGHT / 1.5);
 
 		//自車リア
 		Mat ego_rr_bin = getBinFrame(frame, ego_rr_obj);//2値画像
-		
-		imshow("1", ego_fr_bin);
+		trackFilteredObject(ego_rr_obj, ego_rr_bin, 10, 300, HM_WIDTH * HM_HEIGHT / 1.5);
 
-		imshow("2", ego_rr_bin);
+		//表示
+		circle(frame, Point2d(ego_fr_obj.x, ego_fr_obj.y), 10, cv::Scalar(200, 0, 0), 5);
+		circle(frame, Point2d(ego_rr_obj.x, ego_rr_obj.y), 10, cv::Scalar(0, 200, 0), 5);
+
+		imshow("tracker", frame);
+		///////////////座標から実世界の距離へ変換///////////////
+		Point2f car_a_ce_pos = Point2f((ego_fr_obj.x + ego_rr_obj.x) / 2, (ego_fr_obj.y + ego_rr_obj.y) / 2);
+
+		double car_a_x = (car_a_ce_pos.x / HM_WIDTH) * REAL_WIDTH;
+		double car_a_y = (car_a_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;
+		double radian = atan2(ego_rr_obj.y - ego_fr_obj.y, ego_fr_obj.x - ego_rr_obj.x);//反時計回りを正、-pi～pi
+		double car_a_degree = radian * 180 / 3.14159265358979323846;
+		//表示
+		std::cout << "\t\t x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree << endl;
 #endif // TRACK2
 
 		///////////////勝敗、アイテム判定///////////////
@@ -359,7 +372,7 @@ void morphOps(Mat &thresh) {
 }
 
 
-void trackFilteredObject(struct TrackingObj &obj, Mat binframe, int max_num_obj, int min_obj_area, int max_obj_area) {
+bool trackFilteredObject(struct TrackingObj &obj, Mat binframe, int max_num_obj, int min_obj_area, int max_obj_area) {
 
 	//these two vectors needed for output of findContours
 	vector< vector<cv::Point> > contours;
@@ -399,4 +412,5 @@ void trackFilteredObject(struct TrackingObj &obj, Mat binframe, int max_num_obj,
 
 		}
 	}
+	return objectFound;
 }
