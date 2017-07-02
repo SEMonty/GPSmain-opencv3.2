@@ -168,13 +168,13 @@ int main()
 
 		double car_a_x = (car_a_ce_pos.x / WIDTH) * REAL_WIDTH;
 		double car_a_y = (car_a_ce_pos.y / HEIGHT) * REAL_HEIGHT;
-		double radian = atan2(car_a_rr_pos.y - car_a_fr_pos.y, car_a_fr_pos.x - car_a_rr_pos.x);//反時計回りを正、-pi～pi
-		double car_a_degree = radian * 180 / 3.14159265358979323846;
+		double radian_a = atan2(car_a_rr_pos.y - car_a_fr_pos.y, car_a_fr_pos.x - car_a_rr_pos.x);//反時計回りを正、-pi～pi
+		double car_a_degree = radian_a * 180 / 3.14159265358979323846;
 
 		double car_b_x = (car_b_ce_pos.x / WIDTH) * REAL_WIDTH;
 		double car_b_y = (car_b_ce_pos.y / HEIGHT) * REAL_HEIGHT;
-		double radian = atan2(car_b_rr_pos.y - car_b_fr_pos.y, car_b_fr_pos.x - car_b_rr_pos.x);//反時計回りを正、-pi～pi
-		double car_b_degree = radian * 180 / 3.14159265358979323846;
+		double radian_b = atan2(car_b_rr_pos.y - car_b_fr_pos.y, car_b_fr_pos.x - car_b_rr_pos.x);//反時計回りを正、-pi～pi
+		double car_b_degree = radian_b * 180 / 3.14159265358979323846;
 
 		//表示
 		cout << "x_A:" << car_a_x << " y_A:" << car_a_y << " deg_A:" << car_a_degree << endl;
