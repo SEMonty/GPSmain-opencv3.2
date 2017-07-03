@@ -8,26 +8,27 @@ using namespace cv;
 //適合っぽい変数
 int camera_num = 0; //ビデオ入力番号
 string video_name = "video\\4_720_30fps_横.wmv"; //ビデオの名前
-												//string video_name = "video\\test1.wmv"; //ビデオの名前
+//string video_name = "video\\test1.wmv"; //ビデオの名前
 
 bool online = false; //カメラ：true　ビデオ:false
 
-int CWIDTH = 1280; //カメラ、ビデオの入力画像サイズ
-int CHEIGHT = 720;
+int CM_WIDTH = 1280; //カメラ、ビデオの入力画像サイズ
+int CM_HEIGHT = 720;
 
-float WIDTH = 520;	//透視変換後の画像サイズ
-float HEIGHT = 275;
+float HM_WIDTH = 520;	//透視変換後の画像サイズ
+float HM_HEIGHT = 275;
 
 float REAL_WIDTH = 5.2;  //実際のフィールドサイズ(m)
 float REAL_HEIGHT = 2.75;
 //ビデオ書き出し設定
-const int fourcc = VideoWriter::fourcc('W', 'M', 'V', '3');
+const int fourcc = VideoWriter::fourcc('W', 'M', 'V', '2');
 string filename = "output.wmv";
 
 //#define ARHOMO			//ARUCOで透視変換
 #define MANHOMO			//手動で透視変換
-//#define SAVEVIDEO			//動画
-#define TRACK			//トラッキングする
+//#define SAVEVIDEO			//動画保存
+//#define TRACK			//トラッキングする
+#define TRACK2			//トラッキング2
 int main()
 {
 	///////////////ゲーム開始待ち、開始命令の送信///////////////
@@ -43,8 +44,8 @@ int main()
 		cap.open(video_name);
 
 	if (!cap.isOpened()) {
-		cout << "Camera or video can not be opened" << endl;
-		cout << "Press enter to Exit" << endl;
+		std::cout << "Camera or video can not be opened" << endl;
+		std::cout << "Press enter to Exit" << endl;
 		getchar(); //
 		return -1;
 	}
@@ -53,14 +54,14 @@ int main()
 	//cap.set(CAP_PROP_FRAME_HEIGHT, CHEIGHT);	//サイズ指定
 	//cap.set(CAP_PROP_FPS, 30);				//FPS設定
 	//コンソールにカメラ設定の出力
-	cout << "Web Camera settings:" << endl;
-	cout << "Width:" + to_string(cap.get(CAP_PROP_FRAME_WIDTH)) << endl;
-	cout << "Height:" + to_string(cap.get(CAP_PROP_FRAME_HEIGHT)) << endl;
-	cout << "FPS:" + to_string(cap.get(CAP_PROP_FPS)) << endl;
-	cout << "Exposure:" + to_string(cap.get(CAP_PROP_EXPOSURE)) << endl;
-	cout << "Gain:" + to_string(cap.get(CAP_PROP_GAIN)) << endl;
-	cout << "Iso_speed:" + to_string(cap.get(CAP_PROP_ISO_SPEED)) << endl;
-	cout << "speed:" + to_string(cap.get(CAP_PROP_SPEED)) << endl;
+	std::cout << "Web Camera settings:" << endl;
+	std::cout << "Width:" + to_string(cap.get(CAP_PROP_FRAME_WIDTH)) << endl;
+	std::cout << "Height:" + to_string(cap.get(CAP_PROP_FRAME_HEIGHT)) << endl;
+	std::cout << "FPS:" + to_string(cap.get(CAP_PROP_FPS)) << endl;
+	std::cout << "Exposure:" + to_string(cap.get(CAP_PROP_EXPOSURE)) << endl;
+	std::cout << "Gain:" + to_string(cap.get(CAP_PROP_GAIN)) << endl;
+	std::cout << "Iso_speed:" + to_string(cap.get(CAP_PROP_ISO_SPEED)) << endl;
+	std::cout << "speed:" + to_string(cap.get(CAP_PROP_SPEED)) << endl;
 
 	//初期フレームの読み出し
 	Mat fistframe;
@@ -88,7 +89,7 @@ int main()
 #endif
 	homography_matrix = man_getPerspectiveTransform(fistframe);
 
-	warpPerspective(fistframe, fistframe, homography_matrix, Size(WIDTH, HEIGHT));
+	warpPerspective(fistframe, fistframe, homography_matrix, Size(HM_WIDTH, HM_HEIGHT));
 #ifdef MANHOMO	//手動ホモグラフィ
 #endif // MANHOMO
 
@@ -102,85 +103,95 @@ int main()
 
 	//////////////トラッキングの準備///////////////////////////////
 #ifdef TRACK
-	// Trackerの生成
-	MultiTracker trackerKCF("KCF");
 	// 最初のフレームから追跡対象を選択
 
 	vector<Rect2d> rois;
-	selectROI("tracker", fistframe, rois); // マウスで中心を選択してドラッグ
+	selectROI("tracker", fistframe, rois);
 
-	Point2f car_a_fr_pos = Point2f(rois[0].x + rois[0].width / 2, rois[0].y + rois[0].height / 2);
-	Point2f car_a_rr_pos = Point2f(rois[1].x + rois[1].width / 2, rois[1].y + rois[1].height / 2);
-
-	Point2f car_a_ce_pos = Point2f((car_a_fr_pos.x + car_a_rr_pos.x) / 2, (car_a_fr_pos.y + car_a_rr_pos.y) / 2);
-
-	Point2f car_b_fr_pos = Point2f(rois[2].x + rois[2].width / 2, rois[2].y + rois[2].height / 2);
-	Point2f car_b_rr_pos = Point2f(rois[3].x + rois[3].width / 2, rois[3].y + rois[3].height / 2);
-
-	Point2f car_b_ce_pos = Point2f((car_b_fr_pos.x + car_b_rr_pos.x) / 2, (car_b_fr_pos.y + car_b_rr_pos.y) / 2);
-
-	// Trackerの初期化
+	// Trackerの生成/初期化
+	MultiTracker trackerKCF("KCF");
 	trackerKCF.add(fistframe, rois);
 #endif // TRACK
+#ifdef TRACK2
+	//自車フロントのオブジェクト（ピンク）
+	struct TrackingObj ego_fr_obj = { 146, 231, 7, 256, 65, 231,0,0 };
+	//自車フロントのオブジェクト（黄色）
+	struct TrackingObj ego_rr_obj = { 21, 56, 49, 256, 144, 227,0,0 };
+#endif // TRACK2
+
 
 	//メインループ
 	while (cap.grab()) {
 		Mat frame;
+
+		std::chrono::system_clock::time_point  start, end;
+		start = std::chrono::system_clock::now(); // 計測開始時間
 		///////////////カメラ画像取得///////////////
 		cap.retrieve(frame);
 		imshow("frame", frame);
+
 #ifdef SAVEVIDEO		//動画の保存
 		writer << frame;//フレームを動画に保存
 #endif	
-						///////////////歪み補正(予定)///////////////
-						//////
-						//////
-						//////
-						///////////////透視変換///////////////
-#ifdef MANHOMO || ARHOMO
-		warpPerspective(frame, frame, homography_matrix, Size(WIDTH, HEIGHT));
-		imshow("homography", frame);
-#endif
-		//表示
-		///////////////色抽出(予定)///////////////
-		//////http://d.hatena.ne.jp/Kazzz/20130118/p1
-		//////colorExtraction(&frame, &frame, CV_BGR2HSV, 90, 210, 100, 255, 70, 255);
+
+		///////////////歪み補正(予定)///////////////
 		//////
-		///////////////トラッキング///////////////
+		//////
+		//////
+		//////
+		//////
+		///////////////透視変換///////////////
+#ifdef MANHOMO || ARHOMO
+		warpPerspective(frame, frame, homography_matrix, Size(HM_WIDTH, HM_HEIGHT));
+		imshow("homoed", frame);
+#endif
+		///////////////トラッキング1///////////////
 #ifdef TRACK
 		trackerKCF.update(frame, rois);
+
 		//表示
-		Mat cpframe;
-		frame.copyTo(cpframe);
 		for (unsigned int i = 0; i < rois.size(); i++) {
-			rectangle(cpframe, rois[i], Scalar(0, (80 * (i % 4)), 0), 2, 1);
+			rectangle(frame, rois[i], Scalar(0, (80 * (i % 4)), 0), 2, 1);
 		}
-		imshow("tracker", cpframe);
+		imshow("tracker", frame);
 
 		///////////////座標から実世界の距離へ変換///////////////
 		Point2f car_a_fr_pos = Point2f(rois[0].x + rois[0].width / 2, rois[0].y + rois[0].height / 2);
 		Point2f car_a_rr_pos = Point2f(rois[1].x + rois[1].width / 2, rois[1].y + rois[1].height / 2);
-		Point2f car_b_fr_pos = Point2f(rois[2].x + rois[2].width / 2, rois[2].y + rois[2].height / 2);
-		Point2f car_b_rr_pos = Point2f(rois[3].x + rois[3].width / 2, rois[3].y + rois[3].height / 2);
-
 		Point2f car_a_ce_pos = Point2f((car_a_fr_pos.x + car_a_rr_pos.x) / 2, (car_a_fr_pos.y + car_a_rr_pos.y) / 2);
-		Point2f car_b_ce_pos = Point2f((car_b_fr_pos.x + car_b_rr_pos.x) / 2, (car_b_fr_pos.y + car_b_rr_pos.y) / 2);
 
-		double car_a_x = (car_a_ce_pos.x / WIDTH) * REAL_WIDTH;
-		double car_a_y = (car_a_ce_pos.y / HEIGHT) * REAL_HEIGHT;
-		double radian_a = atan2(car_a_rr_pos.y - car_a_fr_pos.y, car_a_fr_pos.x - car_a_rr_pos.x);//反時計回りを正、-pi～pi
-		double car_a_degree = radian_a * 180 / 3.14159265358979323846;
-
-		double car_b_x = (car_b_ce_pos.x / WIDTH) * REAL_WIDTH;
-		double car_b_y = (car_b_ce_pos.y / HEIGHT) * REAL_HEIGHT;
-		double radian_b = atan2(car_b_rr_pos.y - car_b_fr_pos.y, car_b_fr_pos.x - car_b_rr_pos.x);//反時計回りを正、-pi～pi
-		double car_b_degree = radian_b * 180 / 3.14159265358979323846;
-
-		//表示
-		cout << "x_A:" << car_a_x << " y_A:" << car_a_y << " deg_A:" << car_a_degree << endl;
-		cout << "x_B:" << car_b_x << " y_B:" << car_b_y << " deg_B:" << car_b_degree << endl;
+		double car_a_x = (car_a_ce_pos.x / HM_WIDTH) * REAL_WIDTH;
+		double car_a_y = (car_a_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;
+		double radian = atan2(car_a_rr_pos.y - car_a_fr_pos.y, car_a_fr_pos.x - car_a_rr_pos.x);//反時計回りを正、-pi～pi
+		double car_a_degree = radian * 180 / 3.14159265358979323846;
 
 #endif // TRACK
+		///////////////トラッキング2///////////////
+#ifdef TRACK2
+		//自車フロント
+		Mat ego_fr_bin = getBinFrame(frame, ego_fr_obj);//2値画像
+		trackFilteredObject(ego_fr_obj, ego_fr_bin, 10, 300, HM_WIDTH * HM_HEIGHT / 1.5);
+
+		//自車リア
+		Mat ego_rr_bin = getBinFrame(frame, ego_rr_obj);//2値画像
+		trackFilteredObject(ego_rr_obj, ego_rr_bin, 10, 300, HM_WIDTH * HM_HEIGHT / 1.5);
+
+		//表示
+		circle(frame, Point2d(ego_fr_obj.x, ego_fr_obj.y), 10, cv::Scalar(200, 0, 0), 5);
+		circle(frame, Point2d(ego_rr_obj.x, ego_rr_obj.y), 10, cv::Scalar(0, 200, 0), 5);
+
+		imshow("fr_binframe", ego_fr_bin);
+		imshow("rr_binframe", ego_rr_bin);
+		imshow("tracker", frame);
+		///////////////座標から実世界の距離へ変換///////////////
+		Point2f car_a_ce_pos = Point2f((ego_fr_obj.x + ego_rr_obj.x) / 2, (ego_fr_obj.y + ego_rr_obj.y) / 2);
+
+		double car_a_x = (car_a_ce_pos.x / HM_WIDTH) * REAL_WIDTH;
+		double car_a_y = (car_a_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;
+		double car_a_radian = atan2(ego_rr_obj.y - ego_fr_obj.y, ego_fr_obj.x - ego_rr_obj.x);//反時計回りを正、-pi～pi
+		double car_a_degree = car_a_radian * 180 / 3.14159265358979323846;
+#endif // TRACK2
+
 		///////////////勝敗、アイテム判定///////////////
 		//////
 		//////
@@ -190,7 +201,6 @@ int main()
 		//////
 		//////
 		///////////////その他///////////////
-
 		int key = waitKey(1);
 		if (key == 113)//qボタンが押されたとき終了
 		{
@@ -198,6 +208,13 @@ int main()
 			break;
 		}
 
+		end = std::chrono::system_clock::now();  // 計測終了時間
+		double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(); //処理に要した時間をミリ秒に変換
+
+
+		//表示
+		std::cout << "x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree ;
+		std::cout << " \t elapsed_time:" << elapsed << endl;
 	}
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -254,7 +271,7 @@ Mat man_getPerspectiveTransform(Mat frame) {
 
 	const Point2f src_pt[] = { lefttop, leftbottom,righttop,rightbottom };
 	// 変換後の画像での座標
-	const Point2f dst_pt[] = { Point2f(0,0),Point2f(0,HEIGHT),Point2f(WIDTH, 0),Point2f(WIDTH,HEIGHT) };
+	const Point2f dst_pt[] = { Point2f(0,0),Point2f(0,HM_HEIGHT),Point2f(HM_WIDTH, 0),Point2f(HM_WIDTH,HM_HEIGHT) };
 
 	return  getPerspectiveTransform(src_pt, dst_pt);
 }
@@ -318,70 +335,81 @@ Mat ar_getPerspectiveTransform(Mat frame) {
 	// 変換前の画像での座標
 	const Point2f src_pt[] = { lefttop, leftbottom,righttop,rightbottom };
 	// 変換後の画像での座標
-	const Point2f dst_pt[] = { Point2f(0,0),Point2f(0,HEIGHT),Point2f(WIDTH, 0),Point2f(WIDTH,HEIGHT) };
+	const Point2f dst_pt[] = { Point2f(0,0),Point2f(0,HM_HEIGHT),Point2f(HM_WIDTH, 0),Point2f(HM_WIDTH,HM_HEIGHT) };
 
 	return  getPerspectiveTransform(src_pt, dst_pt);
 }
 
-//ネットから拾ってきた色抽出　http://qiita.com/crakaC/items/65fab9d0b0ac29e68ab6
-void colorExtraction(Mat* src, Mat* dst,
-	int code,
-	int ch1Lower, int ch1Upper,
-	int ch2Lower, int ch2Upper,
-	int ch3Lower, int ch3Upper
-)
-{
-	Mat colorImage;
-	int lower[3];
-	int upper[3];
+//objで指定されたしきい値をもとに2値化（スムージング込み）
+Mat getBinFrame(Mat rgbframe, struct TrackingObj &obj) {
+	Mat result;
+	//RGB→HSV
+	cvtColor(rgbframe, result, COLOR_BGR2HSV);
+	//HSV抽出
+	inRange(result, Scalar(obj.H_MIN, obj.S_MIN, obj.V_MIN), Scalar(obj.H_MAX, obj.S_MAX, obj.V_MAX), result);
+	//スムージング
+	morphOps(result);
+	return result;
+}
 
-	Mat lut = Mat(256, 1, CV_8UC3);
+void morphOps(Mat &thresh) {
 
-	cvtColor(*src, colorImage, code);
+	//create structuring element that will be used to "dilate" and "erode" image.
+	//the element chosen here is a 3px by 3px rectangle
 
-	lower[0] = ch1Lower;
-	lower[1] = ch2Lower;
-	lower[2] = ch3Lower;
+	Mat erodeElement = getStructuringElement(MORPH_RECT, Size(3, 3));
+	//dilate with larger element so make sure object is nicely visible
+	Mat dilateElement = getStructuringElement(MORPH_RECT, Size(8, 8));
 
-	upper[0] = ch1Upper;
-	upper[1] = ch2Upper;
-	upper[2] = ch3Upper;
+	cv::erode(thresh, thresh, erodeElement);
+	cv::erode(thresh, thresh, erodeElement);
 
-	for (int i = 0; i < 256; i++) {
-		for (int k = 0; k < 3; k++) {
-			if (lower[k] <= upper[k]) {
-				if ((lower[k] <= i) && (i <= upper[k])) {
-					lut.data[i*lut.step + k] = 255;
+
+	cv::dilate(thresh, thresh, dilateElement);
+	cv::dilate(thresh, thresh, dilateElement);
+
+}
+
+
+bool trackFilteredObject(struct TrackingObj &obj, Mat binframe, int max_num_obj, int min_obj_area, int max_obj_area) {
+
+	//these two vectors needed for output of findContours
+	vector< vector<cv::Point> > contours;
+	vector<Vec4i> hierarchy;
+	//find contours of filtered image using openCV findContours function
+	findContours(binframe, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+	//use moments method to find our filtered object
+	double refArea = 0;
+	bool objectFound = false;
+	if (hierarchy.size() > 0) {
+		int numObjects = hierarchy.size();
+		//if number of objects greater than MAX_NUM_OBJECTS we have a noisy filter
+		if (numObjects < max_num_obj) {
+			for (int index = 0; index >= 0; index = hierarchy[index][0]) {
+
+				//重心を求める
+				Moments moment = moments((cv::Mat)contours[index]);
+				double area = moment.m00;
+
+				//if the area is less than 20 px by 20px then it is probably just noise
+				//if the area is the same as the 3/2 of the image size, probably just a bad filter
+				//we only want the object with the largest area so we safe a reference area each
+				//iteration and compare it to the area in the next iteration.
+				if (area > min_obj_area && area<max_obj_area && area>refArea) {
+					obj.x = moment.m10 / area;
+					obj.y = moment.m01 / area;
+					objectFound = true;
+					refArea = area;
 				}
-				else {
-					lut.data[i*lut.step + k] = 0;
-				}
+				else objectFound = false;
 			}
-			else {
-				if ((i <= upper[k]) || (lower[k] <= i)) {
-					lut.data[i*lut.step + k] = 255;
-				}
-				else {
-					lut.data[i*lut.step + k] = 0;
-				}
-			}
+
+		}
+		else {
+			//コンソールにカメラ設定の出力
+			std::cout << "TOO MUCH NOISE! ADJUST FILTER" << endl;
+
 		}
 	}
-
-	//LUTを使用して二値化
-	LUT(colorImage, lut, colorImage);
-
-	//Channel毎に分解
-	vector<Mat> planes;
-	split(colorImage, planes);
-
-	//マスクを作成
-	Mat maskImage;
-	bitwise_and(planes[0], planes[1], maskImage);
-	bitwise_and(maskImage, planes[2], maskImage);
-
-	//出力
-	Mat maskedImage;
-	src->copyTo(maskedImage, maskImage);
-	*dst = maskedImage;
+	return objectFound;
 }
