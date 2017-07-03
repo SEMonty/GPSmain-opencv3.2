@@ -188,8 +188,8 @@ int main()
 
 		double car_a_x = (car_a_ce_pos.x / HM_WIDTH) * REAL_WIDTH;
 		double car_a_y = (car_a_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;
-		double radian = atan2(ego_rr_obj.y - ego_fr_obj.y, ego_fr_obj.x - ego_rr_obj.x);//反時計回りを正、-pi～pi
-		double car_a_degree = radian * 180 / 3.14159265358979323846;
+		double car_a_radian = atan2(ego_rr_obj.y - ego_fr_obj.y, ego_fr_obj.x - ego_rr_obj.x);//反時計回りを正、-pi～pi
+		double car_a_degree = car_a_radian * 180 / 3.14159265358979323846;
 #endif // TRACK2
 
 		///////////////勝敗、アイテム判定///////////////
