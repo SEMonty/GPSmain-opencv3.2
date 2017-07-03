@@ -202,7 +202,7 @@ int main(int argc, char* argv[])
 	//video capture object to acquire webcam feed
 	VideoCapture capture;
 	//open capture object at location zero (default location for webcam)
-	capture.open("4_homod.wmv");
+	capture.open(0);
 	if (!capture.isOpened()) {
 		std::cout << "Camera or video can not be opened" << endl;
 		std::cout << "Press enter to Exit" << endl;

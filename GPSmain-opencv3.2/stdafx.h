@@ -19,38 +19,12 @@
 #include <chrono>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
 using namespace cv;
-// TODO: プログラムに必要な追加ヘッダーをここで参照してください
 
-//マウス入力用のパラメータ
-struct mouseParam {
-	int x;
-	int y;
-	int event;
-	int flags;
-};
-
-///認識するオブジェクト情報
-struct TrackingObj {
-	const int H_MIN;
-	const int H_MAX;
-	const int S_MIN;
-	const int S_MAX;
-	const int V_MIN;
-	const int V_MAX;
-	int x;
-	int y;
-};
-// 関数ヘッダー
-cv::Mat ar_getPerspectiveTransform(cv::Mat frame);
-cv::Mat man_getPerspectiveTransform(cv::Mat frame);
-void CallBackFunc(int eventType, int x, int y, int flags, void* userdata);
-Mat getBinFrame(Mat rgbframe, struct TrackingObj &obj);
-void morphOps(Mat &thresh);
-bool trackFilteredObject(struct TrackingObj &obj, Mat threshold, int max_num_obj, int min_obj_area, int max_obj_area);
 
 class MySender
 {
@@ -88,42 +62,36 @@ public:
 };
 
 
+// TODO: プログラムに必要な追加ヘッダーをここで参照してください
 
-class MyReceiver
-{
-private:
-	WSAData wsaData;
-	SOCKET sock;
-	struct sockaddr_in addr;
-	char buf[2048];			//2048文字まで
-public:
-
-	void connect(int port)
-	{
-		WSAStartup(MAKEWORD(2, 0), &wsaData);
-
-		sock = socket(AF_INET, SOCK_DGRAM, 0);
-
-		addr.sin_family = AF_INET;
-		addr.sin_port = htons(port);
-		addr.sin_addr.S_un.S_addr = INADDR_ANY;
-
-		bind(sock, (struct sockaddr *)&addr, sizeof(addr));
-
-		memset(buf, 0, sizeof(buf));//bufの初期化
-	}
-	void disconnect()
-	{
-		closesocket(sock);
-		WSACleanup();
-	}
-	char* recvwait() {
-		recv(sock, buf, sizeof(buf), 0);//受信待ち
-		return buf;
-	}
-
+//マウス入力用のパラメータ
+struct mouseParam {
+	int x;
+	int y;
+	int event;
+	int flags;
 };
 
+///認識するオブジェクト情報
+struct TrackingObj {
+	const int H_MIN;
+	const int H_MAX;
+	const int S_MIN;
+	const int S_MAX;
+	const int V_MIN;
+	const int V_MAX;
+	int x;
+	int y;
+};
+// 関数ヘッダー
+cv::Mat ar_getPerspectiveTransform(cv::Mat frame);
+cv::Mat man_getPerspectiveTransform(cv::Mat frame);
+void CallBackFunc(int eventType, int x, int y, int flags, void* userdata);
+Mat getBinFrame(Mat rgbframe, struct TrackingObj &obj);
+void morphOps(Mat &thresh);
+bool trackFilteredObject(struct TrackingObj &obj, Mat threshold, int max_num_obj, int min_obj_area, int max_obj_area);
+
+#pragma comment(lib,"ws2_32.lib")
 #ifdef _DEBUG
 //Debugモードの場合
 #pragma comment(lib,"opencv_aruco320d.lib")

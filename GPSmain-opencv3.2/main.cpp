@@ -10,7 +10,7 @@ int camera_num = 0; //ビデオ入力番号
 string video_name = "video\\4_720_30fps_横.wmv"; //ビデオの名前
 //string video_name = "video\\test1.wmv"; //ビデオの名前
 
-bool online = false; //カメラ：true　ビデオ:false
+bool online = true; //カメラ：true　ビデオ:false
 
 int CM_WIDTH = 1280; //カメラ、ビデオの入力画像サイズ
 int CM_HEIGHT = 720;
@@ -29,13 +29,24 @@ string filename = "output.wmv";
 //#define SAVEVIDEO			//動画保存
 //#define TRACK			//トラッキングする
 #define TRACK2			//トラッキング2
+
+
 int main()
 {
 
 	///////////////ゲーム開始待ち、開始命令の送信///////////////
 	//送信準備
-	MySender sen;	
-	sen.connect("127.0.0.1", 6001);		//送信相手のIP
+	MySender sen;
+	sen.connect("192.168.10.3", 6003);		//"送信相手のIP",ポート
+
+	char value_car_a_x[256]; //一時的な変数
+	char value_car_a_y[256]; //一時的な変数
+	char value_car_a_radian[256]; //一時的な変数
+	/*alt
+	char value_car_b_x[256]; //一時的な変数
+	char value_car_b_y[256]; //一時的な変数
+	char value_car_b_radian[256]; //一時的な変数
+	*/
 	//開始命令の送信
 	sen.send("s");	//s:開始
 	//////////////////////カメラ接続と最初のフレームの読み出し//////////////////
@@ -117,10 +128,14 @@ int main()
 #endif // TRACK
 #ifdef TRACK2
 	//トラッキングする色の指定
-	struct TrackingObj ego_fr_obj = { 146, 231, 7, 256, 65, 231,0,0 };	//自車フロントのオブジェクト（ピンク）
-	struct TrackingObj ego_rr_obj = { 21, 56, 49, 256, 144, 227,0,0 };	//自車リアのオブジェクト（黄色）
-	struct TrackingObj alt_fr_obj = { 146, 231, 7, 256, 65, 231,0,0 };	//相手フロントのオブジェクト（赤）
-	struct TrackingObj alt_rr_obj = { 21, 56, 49, 256, 144, 227,0,0 };	//相手リアのオブジェクト（青）
+	struct TrackingObj ego_fr_obj = { 0, 65, 93, 256, 37, 256,0,0 };	//自車フロントのオブジェクト（ピンク）
+	struct TrackingObj ego_rr_obj = { 40, 93, 116, 256, 109, 179,0,0 };	//自車リアのオブジェクト（黄色）
+	/*alt
+		 { 146, 231, 7, 256, 65, 231,0,0 };	//自車フロントのオブジェクト（ピンク）
+		 { 21, 56, 49, 256, 144, 227,0,0 };	//自車リアのオブジェクト（黄色）
+	struct TrackingObj alt_fr_obj = { 0, 65, 93, 256, 37, 256,0,0 };	//相手フロントのオブジェクト（オレンジ）	
+	struct TrackingObj alt_rr_obj = { 40, 93, 116, 256, 109, 179,0,0 };	//相手リアのオブジェクト（緑）
+	*/
 #endif // TRACK2
 
 
@@ -184,7 +199,7 @@ int main()
 		//表示
 		circle(frame, Point2d(ego_fr_obj.x, ego_fr_obj.y), 10, cv::Scalar(200, 0, 0), 5);
 		circle(frame, Point2d(ego_rr_obj.x, ego_rr_obj.y), 10, cv::Scalar(0, 200, 0), 5);
-
+		/*alt
 		//相手フロント
 		Mat alt_fr_bin = getBinFrame(frame, alt_fr_obj);//2値画像
 		trackFilteredObject(alt_fr_obj, alt_fr_bin, 10, 300, HM_WIDTH * HM_HEIGHT / 1.5);
@@ -196,22 +211,28 @@ int main()
 		//表示
 		circle(frame, Point2d(alt_fr_obj.x, alt_fr_obj.y), 10, cv::Scalar(200, 0, 0), 5);
 		circle(frame, Point2d(alt_rr_obj.x, alt_rr_obj.y), 10, cv::Scalar(0, 200, 0), 5);
-
+		*/
 		imshow("fr_binframe", ego_fr_bin);
 		imshow("rr_binframe", ego_rr_bin);
-
+		/*alt
 		imshow("fr_binframe", alt_fr_bin);
 		imshow("rr_binframe", alt_rr_bin);
-
+		*/
 		imshow("tracker", frame);
 		///////////////座標から実世界の距離へ変換///////////////
 		Point2f car_a_ce_pos = Point2f((ego_fr_obj.x + ego_rr_obj.x) / 2, (ego_fr_obj.y + ego_rr_obj.y) / 2);//自車の重心
-
 		double car_a_x = (car_a_ce_pos.x / HM_WIDTH) * REAL_WIDTH;
 		double car_a_y = (car_a_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;
 		double car_a_radian = atan2(ego_rr_obj.y - ego_fr_obj.y, ego_fr_obj.x - ego_rr_obj.x);//反時計回りを正、-pi～pi
-		double car_a_degree = car_a_radian * 180 / 3.14159265358979323846;
+		//double car_a_degree = car_a_radian * 180 / 3.14159265358979323846;
 
+		/*alt
+		Point2f car_b_ce_pos = Point2f((alt_fr_obj.x + alt_rr_obj.x) / 2, (alt_fr_obj.y + alt_rr_obj.y) / 2);//自車の重心
+		double car_b_x = (car_b_ce_pos.x / HM_WIDTH) * REAL_WIDTH;
+		double car_b_y = (car_b_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;
+		double car_b_radian = atan2(alt_rr_obj.y - alt_fr_obj.y, alt_fr_obj.x - alt_rr_obj.x);//反時計回りを正、-pi～pi
+		//double car_b_degree = car_a_radian * 180 / 3.14159265358979323846;
+		*/
 
 #endif // TRACK2
 
@@ -221,22 +242,47 @@ int main()
 		//////
 		///////////////データ送信///////////////
 		//
-		char value_car_a_x[256]; //次の行で使う一時的な変数
-		//char value_car_a_y[256]; //次の行で使う一時的な変数
-		//char value_car_a_radian[256]; //次の行で使う一時的な変数
+		sprintf_s(value_car_a_x,"%.3lf", car_a_x); //変数の値も含めた表示したい文字列
+		sprintf_s(value_car_a_y,"%.3lf", car_a_y); //変数の値も含めた表示したい文字列
+		sprintf_s(value_car_a_radian,"%.2lf", abs(car_a_radian)); //変数の値も含めた表示したい文字列
+		/*alt
+		sprintf_s(value_car_b_x, "%.3lf", car_b_x); //変数の値も含めた表示したい文字列
+		sprintf_s(value_car_b_y, "%.3lf", car_b_y); //変数の値も含めた表示したい文字列
+		sprintf_s(value_car_b_radian, "%.2lf", abs(car_b_radian)); //変数の値も含めた表示したい文字列
+		*/
 
-		sprintf_s(value_car_a_x, "value=%04f", car_a_x); //変数の値も含めた表示したい文字列
-		//sprintf_s(value_car_a_y, "value=%04f", car_a_y); //変数の値も含めた表示したい文字列
-		//sprintf_s(value_car_a_radian, "value=%03f", car_a_radian); //変数の値も含めた表示したい文字列
-		
 		string st_car_a_x = string(value_car_a_x);
-		st_car_a_x.replace(2,1, "");
+		st_car_a_x.replace(1,1, "");
 
-		int len = st_car_a_x.length();
+		string st_car_a_y = string(value_car_a_y);
+		st_car_a_y.replace(1, 1, "");
+
+		string st_car_a_radian = string(value_car_a_radian);
+		
+		//ラジアンの符号処理　
+		if (car_a_radian > 0)
+		{
+			st_car_a_radian.replace(0, 0, "0");	//ラジアンが正の時先頭に"0"を追加
+			st_car_a_radian.replace(2, 1, "");
+		}
+		else{
+			st_car_a_radian.replace(0, 0, "1");	//ラジアンが負の時先頭に"1"を追加
+			st_car_a_radian.replace(2, 1, "");
+
+
+		}
+		
+
+
+		//string str2send = st_car_a_x + st_car_a_y + st_car_a_radian;	//まとめ
+		string str2send = st_car_a_x + st_car_a_y + st_car_a_radian+ st_car_a_x + st_car_a_y + st_car_a_radian;	//まとめ 24moji
+
+		int len = str2send.length();
 		char* cstr = new char[len + 1];
-		memcpy(cstr, st_car_a_x.c_str(), len + 1);
+		memcpy(cstr, str2send.c_str(), len + 1);
 
 		sen.send(cstr);	//	 xxxxyyyy0/1rrr(0:+　1:-　x:xx.xx,y:yy.yy,rad:±rr.r
+
 		//////
 		//////
 		///////////////その他///////////////
@@ -252,7 +298,9 @@ int main()
 
 
 		//表示
-		std::cout << "x:" << car_a_x << " y:" << car_a_y << " deg:" << car_a_degree ;
+		std::cout << "x:" << car_a_x << " y:" << car_a_y << " rad:" << car_a_radian ;
+		std::cout << " \t elapsed_time:" << elapsed << endl;
+		std::cout << "send:" << str2send;
 		std::cout << " \t elapsed_time:" << elapsed << endl;
 	}
 }
@@ -299,7 +347,7 @@ Mat man_getPerspectiveTransform(Mat frame) {
 				break;
 			}
 			imshow("manhomo", frame);
-			cv::waitKey(100);
+			cv::waitKey(300);
 			c++;
 		}
 		//4回目で抜ける
@@ -452,3 +500,6 @@ bool trackFilteredObject(struct TrackingObj &obj, Mat binframe, int max_num_obj,
 	}
 	return objectFound;
 }
+
+
+
