@@ -29,7 +29,7 @@ string filename = "output.wmv";
 //#define SAVEVIDEO			//動画保存
 //#define TRACK			//トラッキングする
 #define TRACK2			//トラッキング2
-
+#define ALT
 
 int main()
 {
@@ -42,11 +42,11 @@ int main()
 	char value_car_a_x[256]; //一時的な変数
 	char value_car_a_y[256]; //一時的な変数
 	char value_car_a_radian[256]; //一時的な変数
-	/*alt
+#ifdef ALT	
 	char value_car_b_x[256]; //一時的な変数
 	char value_car_b_y[256]; //一時的な変数
 	char value_car_b_radian[256]; //一時的な変数
-	*/
+#endif
 	//開始命令の送信
 	sen.send("s");	//s:開始
 	//////////////////////カメラ接続と最初のフレームの読み出し//////////////////
@@ -128,14 +128,12 @@ int main()
 #endif // TRACK
 #ifdef TRACK2
 	//トラッキングする色の指定
-	struct TrackingObj ego_fr_obj = { 0, 65, 93, 256, 37, 256,0,0 };	//自車フロントのオブジェクト（ピンク）
-	struct TrackingObj ego_rr_obj = { 40, 93, 116, 256, 109, 179,0,0 };	//自車リアのオブジェクト（黄色）
-	/*alt
-		 { 146, 231, 7, 256, 65, 231,0,0 };	//自車フロントのオブジェクト（ピンク）
-		 { 21, 56, 49, 256, 144, 227,0,0 };	//自車リアのオブジェクト（黄色）
-	struct TrackingObj alt_fr_obj = { 0, 65, 93, 256, 37, 256,0,0 };	//相手フロントのオブジェクト（オレンジ）	
-	struct TrackingObj alt_rr_obj = { 40, 93, 116, 256, 109, 179,0,0 };	//相手リアのオブジェクト（緑）
-	*/
+	struct TrackingObj ego_fr_obj = { 151, 256, 67, 256, 103,214,0,0 };	//自車フロントのオブジェクト（赤）
+	struct TrackingObj ego_rr_obj = { 40, 93, 116, 256, 109, 179,0,0 };	//自車リアのオブジェクト（緑）
+	#ifdef ALT	
+		struct TrackingObj alt_fr_obj = { 88, 130, 153, 256, 124, 210,0,0  };	//相手フロントのオブジェクト（青）	
+		struct TrackingObj alt_rr_obj = { 21, 56, 49, 256, 144, 227,0,0 };	//相手リアのオブジェクト（黄色）
+	#endif
 #endif // TRACK2
 
 
@@ -148,7 +146,7 @@ int main()
 		start = std::chrono::system_clock::now(); // 計測開始時間
 		///////////////カメラ画像取得///////////////
 		cap.retrieve(frame);
-		imshow("frame", frame);
+		cv::imshow("frame", frame);
 
 #ifdef SAVEVIDEO		//動画の保存
 		writer << frame;//フレームを動画に保存
@@ -163,7 +161,7 @@ int main()
 		///////////////透視変換///////////////
 #ifdef MANHOMO || ARHOMO
 		warpPerspective(frame, frame, homography_matrix, Size(HM_WIDTH, HM_HEIGHT));
-		imshow("homoed", frame);
+		cv::imshow("homoed", frame);
 #endif
 		///////////////トラッキング1///////////////
 #ifdef TRACK
@@ -196,10 +194,7 @@ int main()
 		Mat ego_rr_bin = getBinFrame(frame, ego_rr_obj);//2値画像
 		trackFilteredObject(ego_rr_obj, ego_rr_bin, 10, 300, HM_WIDTH * HM_HEIGHT / 1.5);
 
-		//表示
-		circle(frame, Point2d(ego_fr_obj.x, ego_fr_obj.y), 10, cv::Scalar(200, 0, 0), 5);
-		circle(frame, Point2d(ego_rr_obj.x, ego_rr_obj.y), 10, cv::Scalar(0, 200, 0), 5);
-		/*alt
+#ifdef ALT	
 		//相手フロント
 		Mat alt_fr_bin = getBinFrame(frame, alt_fr_obj);//2値画像
 		trackFilteredObject(alt_fr_obj, alt_fr_bin, 10, 300, HM_WIDTH * HM_HEIGHT / 1.5);
@@ -207,32 +202,40 @@ int main()
 		//自車リア
 		Mat alt_rr_bin = getBinFrame(frame, alt_rr_obj);//2値画像
 		trackFilteredObject(alt_rr_obj, alt_rr_bin, 10, 300, HM_WIDTH * HM_HEIGHT / 1.5);
-
+#endif
 		//表示
-		circle(frame, Point2d(alt_fr_obj.x, alt_fr_obj.y), 10, cv::Scalar(200, 0, 0), 5);
-		circle(frame, Point2d(alt_rr_obj.x, alt_rr_obj.y), 10, cv::Scalar(0, 200, 0), 5);
-		*/
-		imshow("fr_binframe", ego_fr_bin);
-		imshow("rr_binframe", ego_rr_bin);
-		/*alt
-		imshow("fr_binframe", alt_fr_bin);
-		imshow("rr_binframe", alt_rr_bin);
-		*/
-		imshow("tracker", frame);
+		cv::circle(frame, Point2d(ego_fr_obj.x, ego_fr_obj.y), 10, cv::Scalar(200, 0, 0), 5);
+		cv::circle(frame, Point2d(ego_rr_obj.x, ego_rr_obj.y), 10, cv::Scalar(0, 200, 0), 5);
+
+		cv::imshow("ego_fr_binframe", ego_fr_bin);
+		cv::imshow("ego_rr_binframe", ego_rr_bin);
+#ifdef ALT
+		//表示
+		cv::circle(frame, Point2d(alt_fr_obj.x, alt_fr_obj.y), 10, cv::Scalar(200, 200, 0), 5);
+		cv::circle(frame, Point2d(alt_rr_obj.x, alt_rr_obj.y), 10, cv::Scalar(100, 100, 0), 5);
+		cv::imshow("alt_fr_binframe", alt_fr_bin);
+		cv::imshow("alt_rr_binframe", alt_rr_bin);
+#endif
+		cv::imshow("tracker", frame);
 		///////////////座標から実世界の距離へ変換///////////////
 		Point2f car_a_ce_pos = Point2f((ego_fr_obj.x + ego_rr_obj.x) / 2, (ego_fr_obj.y + ego_rr_obj.y) / 2);//自車の重心
 		double car_a_x = (car_a_ce_pos.x / HM_WIDTH) * REAL_WIDTH;
-		double car_a_y = (car_a_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;
+		//double car_a_y = (car_a_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;
+		double car_a_y_temp = (car_a_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;//左下を原点
+		double car_a_y = - car_a_y_temp + REAL_HEIGHT;
+
 		double car_a_radian = atan2(ego_rr_obj.y - ego_fr_obj.y, ego_fr_obj.x - ego_rr_obj.x);//反時計回りを正、-pi～pi
 		//double car_a_degree = car_a_radian * 180 / 3.14159265358979323846;
 
-		/*alt
+#ifdef ALT
 		Point2f car_b_ce_pos = Point2f((alt_fr_obj.x + alt_rr_obj.x) / 2, (alt_fr_obj.y + alt_rr_obj.y) / 2);//自車の重心
 		double car_b_x = (car_b_ce_pos.x / HM_WIDTH) * REAL_WIDTH;
-		double car_b_y = (car_b_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;
+		//double car_b_y = (car_b_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;
+		double car_b_y_temp = (car_a_ce_pos.y / HM_HEIGHT) * REAL_HEIGHT;//左下を原点
+		double car_b_y = -car_b_y_temp + REAL_HEIGHT;
 		double car_b_radian = atan2(alt_rr_obj.y - alt_fr_obj.y, alt_fr_obj.x - alt_rr_obj.x);//反時計回りを正、-pi～pi
 		//double car_b_degree = car_a_radian * 180 / 3.14159265358979323846;
-		*/
+#endif
 
 #endif // TRACK2
 
@@ -245,43 +248,58 @@ int main()
 		sprintf_s(value_car_a_x,"%.3lf", car_a_x); //変数の値も含めた表示したい文字列
 		sprintf_s(value_car_a_y,"%.3lf", car_a_y); //変数の値も含めた表示したい文字列
 		sprintf_s(value_car_a_radian,"%.2lf", abs(car_a_radian)); //変数の値も含めた表示したい文字列
-		/*alt
+
+		string st_car_a_x = string(value_car_a_x);  //replaceするためにstringに変換
+		string st_car_a_y = string(value_car_a_y);	//replaceするためにstringに変換
+		string st_car_a_radian = string(value_car_a_radian);	//replaceするためにstringに変換
+
+#ifdef ALT
 		sprintf_s(value_car_b_x, "%.3lf", car_b_x); //変数の値も含めた表示したい文字列
 		sprintf_s(value_car_b_y, "%.3lf", car_b_y); //変数の値も含めた表示したい文字列
 		sprintf_s(value_car_b_radian, "%.2lf", abs(car_b_radian)); //変数の値も含めた表示したい文字列
-		*/
 
-		string st_car_a_x = string(value_car_a_x);
-		st_car_a_x.replace(1,1, "");
-
-		string st_car_a_y = string(value_car_a_y);
-		st_car_a_y.replace(1, 1, "");
-
-		string st_car_a_radian = string(value_car_a_radian);
+		string st_car_b_x = string(value_car_b_x);  //replaceするためにstringに変換
+		string st_car_b_y = string(value_car_b_y);	//replaceするためにstringに変換
+		string st_car_b_radian = string(value_car_b_radian);	//replaceするためにstringに変換
+#endif
+				
+		st_car_a_x.replace(1,1,"");		//少数点の削除
+		st_car_a_y.replace(1,1,"");		//少数点の削除
+		//ラジアンの符号＆少数点の処理　
+			if (car_a_radian > 0)
+			{
+				st_car_a_radian.replace(0,0,"0");	//ラジアンが正の時先頭に"0"を追加
+				st_car_a_radian.replace(2,1,"");	//少数点の削除
+			}
+			else{
+				st_car_a_radian.replace(0,0,"1");	//ラジアンが負の時先頭に"1"を追加
+				st_car_a_radian.replace(2,1,"");	//少数点の削除
+			}
+#ifdef ALT
+			st_car_b_x.replace(1, 1, "");		//少数点の削除
+			st_car_b_y.replace(1, 1, "");		//少数点の削除
+												//ラジアンの符号＆少数点の処理　
+			if (car_b_radian > 0)
+			{
+				st_car_b_radian.replace(0, 0, "0");	//ラジアンが正の時先頭に"0"を追加
+				st_car_b_radian.replace(2, 1, "");	//少数点の削除
+			}
+			else {
+				st_car_b_radian.replace(0, 0, "1");	//ラジアンが負の時先頭に"1"を追加
+				st_car_b_radian.replace(2, 1, "");	//少数点の削除
+			}
+#endif
 		
-		//ラジアンの符号処理　
-		if (car_a_radian > 0)
-		{
-			st_car_a_radian.replace(0, 0, "0");	//ラジアンが正の時先頭に"0"を追加
-			st_car_a_radian.replace(2, 1, "");
-		}
-		else{
-			st_car_a_radian.replace(0, 0, "1");	//ラジアンが負の時先頭に"1"を追加
-			st_car_a_radian.replace(2, 1, "");
+		//string str2send = st_car_a_x + st_car_a_y + st_car_a_radian;	//まとめ 12文字ver
+		//string str2send = st_car_a_x + st_car_a_y + st_car_a_radian+ st_car_a_x + st_car_a_y + st_car_a_radian;	//まとめ 24文字ver
+		string str2send = st_car_a_x + st_car_a_y + st_car_a_radian + st_car_b_x + st_car_b_y + st_car_b_radian;	//まとめ 24文字ver
 
-
-		}
-		
-
-
-		//string str2send = st_car_a_x + st_car_a_y + st_car_a_radian;	//まとめ
-		string str2send = st_car_a_x + st_car_a_y + st_car_a_radian+ st_car_a_x + st_car_a_y + st_car_a_radian;	//まとめ 24moji
 
 		int len = str2send.length();
 		char* cstr = new char[len + 1];
 		memcpy(cstr, str2send.c_str(), len + 1);
 
-		sen.send(cstr);	//	 xxxxyyyy0/1rrr(0:+　1:-　x:xx.xx,y:yy.yy,rad:±rr.r
+		sen.send(cstr);	//	 送信　xxxxyyyy0/1rrr(0:+　1:-　x:xx.xx,y:yy.yy,rad:±rr.r）
 
 		//////
 		//////
@@ -298,7 +316,9 @@ int main()
 
 
 		//表示
-		std::cout << "x:" << car_a_x << " y:" << car_a_y << " rad:" << car_a_radian ;
+		std::cout << "x1:" << car_a_x << " y1:" << car_a_y << " rad1:" << car_a_radian ;
+		std::cout << " \t elapsed_time:" << elapsed << endl;
+		std::cout << "x2:" << car_b_x << " y2:" << car_b_y << " rad2:" << car_b_radian;
 		std::cout << " \t elapsed_time:" << elapsed << endl;
 		std::cout << "send:" << str2send;
 		std::cout << " \t elapsed_time:" << elapsed << endl;
@@ -316,11 +336,11 @@ Mat man_getPerspectiveTransform(Mat frame) {
 	Point2f leftbottom;
 	Point2f rightbottom;
 
-	imshow("manhomo", frame);
+	cv::imshow("manhomo", frame);
 	setMouseCallback("manhomo", CallBackFunc, &mouseEvent);
 	int c = 0;
 	while (1) {
-		imshow("manhomo", frame);
+		cv::imshow("manhomo", frame);
 		cv::waitKey(1);
 		if (mouseEvent.event == cv::EVENT_LBUTTONDOWN) {
 			std::cout << mouseEvent.x << " , " << mouseEvent.y << std::endl;
@@ -329,24 +349,24 @@ Mat man_getPerspectiveTransform(Mat frame) {
 			{
 			case 0:
 				lefttop = poi;
-				circle(frame, poi, 5, cv::Scalar(200, 0, 0), -1);
+				cv::circle(frame, poi, 5, cv::Scalar(200, 0, 0), -1);
 				break;
 			case 1:
 				righttop = poi;
-				circle(frame, poi, 5, cv::Scalar(0, 200, 0), -1);
+				cv::circle(frame, poi, 5, cv::Scalar(0, 200, 0), -1);
 				break;
 			case 2:
 				rightbottom = poi;
-				circle(frame, poi, 5, cv::Scalar(0, 0, 200), -1);
+				cv::circle(frame, poi, 5, cv::Scalar(0, 0, 200), -1);
 				break;
 			case 3:
 				leftbottom = poi;
-				circle(frame, poi, 5, cv::Scalar(200, 0, 200), -1);
+				cv::circle(frame, poi, 5, cv::Scalar(200, 0, 200), -1);
 				break;
 			default:
 				break;
 			}
-			imshow("manhomo", frame);
+			cv::imshow("manhomo", frame);
 			cv::waitKey(300);
 			c++;
 		}
@@ -393,31 +413,31 @@ Mat ar_getPerspectiveTransform(Mat frame) {
 		if (markerIds[i] == 0)
 		{
 			lefttop = markerCorners[i][2];
-			circle(frame, lefttop, 2, Scalar(0, 255, 0), 3, 4);
+			cv::circle(frame, lefttop, 2, Scalar(0, 255, 0), 3, 4);
 		}
 		if (markerIds[i] == 1)
 		{
 			righttop = markerCorners[i][3];//Point2f(Markers[i][0].x, Markers[i][2].y);
-			circle(frame, righttop, 2, Scalar(255, 0, 0), 3, 4);
+			cv::circle(frame, righttop, 2, Scalar(255, 0, 0), 3, 4);
 		}
 
 		if (markerIds[i] == 2)
 		{
 			rightbottom = markerCorners[i][0];
-			circle(frame, rightbottom, 2, Scalar(255, 0, 255), 3, 4);
+			cv::circle(frame, rightbottom, 2, Scalar(255, 0, 255), 3, 4);
 		}
 
 		if (markerIds[i] == 3)
 		{
 			leftbottom = markerCorners[i][1];
-			circle(frame, leftbottom, 2, Scalar(0, 255, 255), 3, 4);
+			cv::circle(frame, leftbottom, 2, Scalar(0, 255, 255), 3, 4);
 		}
 	}
 	//表示
 	Mat cpframe;
 	frame.copyTo(cpframe);
 	aruco::drawDetectedMarkers(cpframe, markerCorners, markerIds);
-	imshow("marker", cpframe);
+	cv::imshow("marker", cpframe);
 
 	// 変換前の画像での座標
 	const Point2f src_pt[] = { lefttop, leftbottom,righttop,rightbottom };
