@@ -190,6 +190,7 @@ int main()
 		Mat ego_fr_bin = getBinFrame(frame, ego_fr_obj);//2’l‰æ‘œ
 		trackFilteredObject(ego_fr_obj, ego_fr_bin, 10, 300, HM_WIDTH * HM_HEIGHT / 1.5);
 
+
 		//Ž©ŽÔƒŠƒA
 		Mat ego_rr_bin = getBinFrame(frame, ego_rr_obj);//2’l‰æ‘œ
 		trackFilteredObject(ego_rr_obj, ego_rr_bin, 10, 300, HM_WIDTH * HM_HEIGHT / 1.5);
